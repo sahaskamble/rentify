@@ -1,0 +1,246 @@
+# Instincts generated from https://github.com/sahaskamble/rentify
+# Generated: 2026-03-21T19:28:43.710Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: rentify-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, chore, fix
+
+## Evidence
+
+- 9 commits analyzed
+- Detected conventional commit pattern
+- Examples: fix: use SliverPadding for ListingsGrid in CustomScrollView, chore: final verification - build passing
+
+---
+id: rentify-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Commit Length
+
+## Action
+
+Keep commit messages concise (~40 characters)
+
+## Evidence
+
+- Average commit message length: 40 chars
+- Based on 9 commits
+
+---
+id: rentify-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: rentify-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: rentify-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: rentify-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: rentify-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~17x per month
+- Files: **/*.test.*
+
+---
+id: rentify-workflow-add-new-ui-widget
+trigger: "when doing add new ui widget"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Workflow Add New Ui Widget
+
+## Action
+
+Follow the add-new-ui-widget workflow:
+1. Create new Dart files for each widget in the appropriate widgets/ directory under the screen.
+2. Implement the widget logic and UI.
+3. (Optionally) Update the parent screen to use the new widgets.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: lib/screens/*/widgets/*.dart
+
+---
+id: rentify-workflow-feature-development-ui-model-mockdata
+trigger: "when doing feature development ui model mockdata"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Workflow Feature Development Ui Model Mockdata
+
+## Action
+
+Follow the feature-development-ui-model-mockdata workflow:
+1. Create or update model class in lib/models/
+2. Add or update mock data in lib/data/
+3. Update or create UI screen to use the new model/data
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: lib/models/*.dart, lib/data/*.dart, lib/screens/*/*.dart
+
+---
+id: rentify-workflow-add-theme-files
+trigger: "when doing add theme files"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Workflow Add Theme Files
+
+## Action
+
+Follow the add-theme-files workflow:
+1. Create or update color definitions in lib/theme/app_colors.dart
+2. Create or update text style definitions in lib/theme/app_text_styles.dart
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: lib/theme/app_colors.dart, lib/theme/app_text_styles.dart
+
+---
+id: rentify-workflow-project-setup-or-platform-update
+trigger: "when doing project setup or platform update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/sahaskamble/rentify
+---
+
+# Rentify Workflow Project Setup Or Platform Update
+
+## Action
+
+Follow the project-setup-or-platform-update workflow:
+1. Update pubspec.yaml and pubspec.lock
+2. Update platform-specific plugin registrant files (e.g., macos/Flutter/GeneratedPluginRegistrant.swift)
+3. Update .gitignore as needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: pubspec.yaml, pubspec.lock, macos/Flutter/GeneratedPluginRegistrant.swift
+
