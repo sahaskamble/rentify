@@ -1,5 +1,5 @@
 name: rentify
-description: "A new Flutter project."
+description: "Rentify Store -use karo kharidna zaroori nahi"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -37,6 +37,10 @@ dependencies:
   google_fonts: ^6.1.0
   cached_network_image: ^3.3.0
   flutter_svg: ^2.0.9
+  pocketbase: ^0.23.2
+  riverpod: ^3.2.1
+  flutter_riverpod: ^3.3.1
+  riverpod_generator: ^4.0.3
 
 dev_dependencies:
   flutter_test:

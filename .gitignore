@@ -47,4 +47,5 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-/backend/pb_data
+/backend/pb_data/
+/backend/
