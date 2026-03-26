@@ -50,3 +50,4 @@ app.*.map.json
 /backend/pb_data/
 /backend/
 repomix*.xml
+.aider*

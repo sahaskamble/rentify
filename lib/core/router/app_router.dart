@@ -12,6 +12,11 @@ import '../../features/seller/screens/create_listing/create_listing_screen.dart'
 import '../../features/rental/screens/booking_screen.dart';
 import '../../features/rental/screens/rental_detail_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/home/screens/home_screen.dart';
+import '../../features/search/screens/search_screen.dart';
+import '../../features/rental/screens/my_rentals_screen.dart';
+import '../../features/chat/screens/conversations_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 
 abstract class AppRoutes {
   static const splash = '/';
@@ -38,8 +43,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.splash,
     debugLogDiagnostics: false,
     redirect: (context, state) {
-      // Only redirect if auth state is in data (loaded successfully)
-      // Skip redirect while loading to let splash screen handle its own logic
       if (authState case AsyncData(:final value)) {
         final isLoggedIn = value.isAuthenticated;
         final isAuthRoute = [
@@ -72,7 +75,52 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, state) =>
             OtpScreen(phone: state.uri.queryParameters['phone'] ?? ''),
       ),
-      GoRoute(path: AppRoutes.shell, builder: (_, __) => const ShellScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            ShellScreen(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.shell,
+                builder: (_, __) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/categories',
+                builder: (_, __) => const SearchScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/add',
+                builder: (_, __) => const MyRentalsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/chat',
+                builder: (_, __) => const ConversationsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (_, __) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
       GoRoute(
         path: AppRoutes.listingDetail,
         builder: (_, state) =>

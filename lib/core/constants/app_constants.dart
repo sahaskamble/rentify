@@ -2,8 +2,9 @@ class AppConstants {
   AppConstants._();
 
   // PocketBase
-  static const String pbUrl = 'http://10.0.2.2:8090'; // Android emulator → localhost
-  static const String pbUrlLocal = 'http://localhost:8090';
+  static const String pbUrl =
+      'https://backend.rentifystore.com'; // Android emulator → localhost
+  static const String pbUrlLocal = 'https://backend.rentifystore.com';
 
   // Collections
   static const String colUsers = 'users';
