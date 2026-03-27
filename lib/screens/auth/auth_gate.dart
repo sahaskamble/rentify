@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rentify/main.dart';
 import 'package:rentify/providers/auth_provider.dart';
+import 'package:rentify/screens/auth/login_screen.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});

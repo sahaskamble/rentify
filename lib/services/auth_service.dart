@@ -11,16 +11,16 @@ class AuthService {
     final authData = await pb
         .collection('users')
         .authWithPassword(email, password);
-    return UsersRecord.fromJson(authData.record!.toJson());
+    return UsersRecord.fromJson(authData.record.toJson());
   }
 
   Future<UsersRecord> register({
     required String email,
-    required String name,
-    required String phone,
-    required String role,
-    required String city,
-    required String area,
+    // required String name,
+    // required String phone,
+    // required String role,
+    // required String city,
+    // required String area,
     required String password,
   }) async {
     final record = await pb
@@ -30,11 +30,11 @@ class AuthService {
             "email": email,
             "password": password,
             "passwordConfirm": password,
-            "name": name,
-            "phone": phone,
-            "role": role,
-            "city": city,
-            "area": area,
+            // "name": name,
+            // "phone": phone,
+            // "role": role,
+            // "city": city,
+            // "area": area,
           },
         );
     return UsersRecord.fromJson(record.toJson());

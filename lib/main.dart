@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rentify/generated/pocketbase/listings_record.dart';
+import 'package:rentify/screens/auth/auth_gate.dart';
 import 'package:rentify/services/listing_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,7 +13,7 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: "Rentify App", home: ListinsScreen());
+    return MaterialApp(title: "Rentify App", home: AuthGate());
   }
 }
 
