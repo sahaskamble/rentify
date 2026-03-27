@@ -1,8 +1,54 @@
+import 'package:pocketbase/pocketbase.dart';
 import 'package:rentify/generated/pocketbase/users_record.dart';
 import 'package:rentify/services/pocketbase_service.dart';
 
+class RegisterPayload {
+  const RegisterPayload({
+    required this.email,
+    required this.password,
+    required this.name,
+    required this.role,
+    this.phone,
+    this.city,
+    this.area,
+  });
+
+  final String email;
+  final String password;
+  final String name;
+  final UsersRecordRoleEnum role;
+  final String? phone;
+  final String? city;
+  final String? area;
+}
+
 class AuthService {
-  final pb = PocketBaseService().pb;
+  AuthService() : _pocketBaseService = PocketBaseService();
+
+  final PocketBaseService _pocketBaseService;
+
+  PocketBase get pb => _pocketBaseService.pb;
+
+  Future<void> initialize() async {
+    await _pocketBaseService.initialize();
+
+    if (pb.authStore.token.isEmpty) {
+      return;
+    }
+
+    if (!pb.authStore.isValid) {
+      await logout();
+      return;
+    }
+
+    try {
+      await pb.collection('users').authRefresh();
+    } on ClientException catch (error) {
+      if (error.statusCode != 0) {
+        await logout();
+      }
+    }
+  }
 
   Future<UsersRecord> login({
     required String email,
@@ -14,33 +60,29 @@ class AuthService {
     return UsersRecord.fromJson(authData.record.toJson());
   }
 
-  Future<UsersRecord> register({
-    required String email,
-    // required String name,
-    // required String phone,
-    // required String role,
-    // required String city,
-    // required String area,
-    required String password,
-  }) async {
-    final record = await pb
+  Future<UsersRecord> register(RegisterPayload payload) async {
+    await pb
         .collection('users')
         .create(
           body: {
-            "email": email,
-            "password": password,
-            "passwordConfirm": password,
-            // "name": name,
-            // "phone": phone,
-            // "role": role,
-            // "city": city,
-            // "area": area,
+            'email': payload.email,
+            'password': payload.password,
+            'passwordConfirm': payload.password,
+            'name': payload.name,
+            'role': payload.role.nameInSchema,
+            if (payload.phone != null && payload.phone!.isNotEmpty)
+              'phone': payload.phone,
+            if (payload.city != null && payload.city!.isNotEmpty)
+              'city': payload.city,
+            if (payload.area != null && payload.area!.isNotEmpty)
+              'area': payload.area,
           },
         );
-    return UsersRecord.fromJson(record.toJson());
+
+    return login(email: payload.email, password: payload.password);
   }
 
-  void logout() {
+  Future<void> logout() async {
     pb.authStore.clear();
   }
 
@@ -48,8 +90,31 @@ class AuthService {
     final record = pb.authStore.record;
     if (record == null) return null;
 
-    return UsersRecord.fromJson(record.toJson());
+    return UsersRecord.fromRecordModel(record);
   }
 
   bool get isLoggedIn => pb.authStore.isValid;
+
+  String readErrorMessage(Object error) {
+    if (error is ClientException) {
+      final message = error.response['message'];
+      if (message is String && message.trim().isNotEmpty) {
+        return message.trim();
+      }
+
+      final data = error.response['data'];
+      if (data is Map<String, dynamic>) {
+        for (final value in data.values) {
+          if (value is Map<String, dynamic>) {
+            final fieldMessage = value['message'];
+            if (fieldMessage is String && fieldMessage.trim().isNotEmpty) {
+              return fieldMessage.trim();
+            }
+          }
+        }
+      }
+    }
+
+    return 'Unable to complete the request. Please try again.';
+  }
 }

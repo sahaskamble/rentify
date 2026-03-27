@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rentify/generated/pocketbase/listings_record.dart';
+import 'package:rentify/providers/auth_provider.dart';
 import 'package:rentify/screens/auth/auth_gate.dart';
 import 'package:rentify/services/listing_service.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rentify/theme/app_theme.dart';
 
 void main() {
   runApp(const ProviderScope(child: MainApp()));
@@ -13,18 +15,23 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: "Rentify App", home: AuthGate());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      title: 'Rentify',
+      home: const AuthGate(),
+    );
   }
 }
 
-class ListinsScreen extends StatefulWidget {
+class ListinsScreen extends ConsumerStatefulWidget {
   const ListinsScreen({super.key});
 
   @override
-  State<ListinsScreen> createState() => _ListinsScreenState();
+  ConsumerState<ListinsScreen> createState() => _ListinsScreenState();
 }
 
-class _ListinsScreenState extends State<ListinsScreen> {
+class _ListinsScreenState extends ConsumerState<ListinsScreen> {
   final service = ListingService();
   late Future<List<ListingsRecord>> future;
 
@@ -36,8 +43,23 @@ class _ListinsScreenState extends State<ListinsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Listings')),
+      appBar: AppBar(
+        title: Text(
+          authState.user?.name?.trim().isNotEmpty == true
+              ? 'Welcome, ${authState.user!.name!.trim()}'
+              : 'Rentify Listings',
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Logout',
+            onPressed: () => ref.read(authStateProvider.notifier).logout(),
+            icon: const Icon(Icons.logout_rounded),
+          ),
+        ],
+      ),
       body: FutureBuilder<List<ListingsRecord>>(
         future: future,
         builder: (context, snapshot) {
