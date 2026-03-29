@@ -4,9 +4,14 @@ import 'package:rentify/generated/pocketbase/listings_record.dart';
 import 'package:rentify/providers/auth_provider.dart';
 import 'package:rentify/screens/auth/auth_gate.dart';
 import 'package:rentify/services/listing_service.dart';
+import 'package:rentify/services/pocketbase_service.dart';
 import 'package:rentify/theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await PocketBaseService().initialize();
+
   runApp(const ProviderScope(child: MainApp()));
 }
 

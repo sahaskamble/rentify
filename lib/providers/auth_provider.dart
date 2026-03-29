@@ -64,7 +64,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
-    initialize();
+    Future.microtask(initialize);
     return const AuthState.initial();
   }
 
@@ -81,9 +81,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> initialize() async {
-    if (_didInitialize) {
-      return;
-    }
+    if (_didInitialize) return;
 
     _didInitialize = true;
 
@@ -93,6 +91,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
     try {
       await _authService.initialize();
+
+      // 🔥 ADD THIS
+      _authService.pb.authStore.onChange.listen((_) {
+        final user = _authService.currentUser;
+
+        state = state.copyWith(user: user);
+      });
     } finally {
       state = state.copyWith(
         user: _authService.currentUser,

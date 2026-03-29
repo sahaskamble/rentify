@@ -27,14 +27,42 @@ class AuthService {
 
   final PocketBaseService _pocketBaseService;
 
-  PocketBase get pb => _pocketBaseService.pb;
+  PocketBase get pb {
+    if (!_pocketBaseService.isInitialized) {
+      throw StateError(
+        'PocketBaseService not initialized. Call initialize() first.',
+      );
+    }
+    return _pocketBaseService.pb;
+  }
+
+  bool get isInitialized => _pocketBaseService.isInitialized;
+
+  // Future<void> initialize() async {
+  //   await _pocketBaseService.initialize();
+  //
+  //   if (pb.authStore.token.isEmpty) {
+  //     return;
+  //   }
+  //
+  //   if (!pb.authStore.isValid) {
+  //     await logout();
+  //     return;
+  //   }
+  //
+  //   try {
+  //     await pb.collection('users').authRefresh();
+  //   } on ClientException catch (error) {
+  //     if (error.statusCode != 0) {
+  //       await logout();
+  //     }
+  //   }
+  // }
 
   Future<void> initialize() async {
     await _pocketBaseService.initialize();
 
-    if (pb.authStore.token.isEmpty) {
-      return;
-    }
+    if (pb.authStore.token.isEmpty) return;
 
     if (!pb.authStore.isValid) {
       await logout();
@@ -43,10 +71,8 @@ class AuthService {
 
     try {
       await pb.collection('users').authRefresh();
-    } on ClientException catch (error) {
-      if (error.statusCode != 0) {
-        await logout();
-      }
+    } catch (_) {
+      await logout();
     }
   }
 

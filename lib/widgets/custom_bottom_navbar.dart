@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:rentify/screens/categories/categories_screen.dart';
+import 'package:rentify/screens/chat/chat_screen.dart';
+import 'package:rentify/screens/home/home_screen.dart';
+import 'package:rentify/screens/profile/profile_screen.dart';
 import 'package:rentify/theme/app_theme.dart';
 
 class CustomBottomNav extends StatefulWidget {
@@ -11,6 +15,13 @@ class CustomBottomNav extends StatefulWidget {
 class _CustomBottomNavState extends State<CustomBottomNav> {
   int currentIndex = 0;
 
+  final List<Widget> screens = const [
+    HomeScreen(),
+    CategoriesScreen(),
+    ChatScreen(),
+    ProfileScreen(),
+  ];
+
   void onTabTapped(int index) {
     setState(() => currentIndex = index);
   }
@@ -19,9 +30,7 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-
-      body: const Center(child: Text("Content Here")),
-
+      body: IndexedStack(index: currentIndex, children: screens),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: AppColors.primary,
@@ -65,7 +74,7 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),

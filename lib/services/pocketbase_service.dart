@@ -1,66 +1,53 @@
 import 'dart:convert';
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PocketBaseService {
   static final PocketBaseService _instance = PocketBaseService._internal();
-  static const _authStorageKey = 'pb_auth';
 
   factory PocketBaseService() => _instance;
 
+  PocketBaseService._internal();
+
   late final PocketBase pb;
-  final FlutterSecureStorage storage = const FlutterSecureStorage();
-  bool _didLoadStoredAuth = false;
 
-  PocketBaseService._internal() {
-    pb = PocketBase('https://backend.rentifystore.com');
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-    pb.authStore.onChange.listen((event) async {
-      if (event.token.isEmpty) {
-        await storage.delete(key: _authStorageKey);
-        return;
-      }
+  static const _authKey = 'pb_auth';
 
-      final payload = jsonEncode({
-        'token': event.token,
-        'record': event.record?.toJson(),
-      });
+  bool _isInitialized = false;
 
-      await storage.write(key: _authStorageKey, value: payload);
-    });
-  }
+  bool get isInitialized => _isInitialized;
 
   Future<void> initialize() async {
-    if (_didLoadStoredAuth) {
-      return;
+    if (_isInitialized) return;
+
+    _isInitialized = true;
+
+    pb = PocketBase('https://backend.rentifystore.com');
+
+    final stored = await _storage.read(key: _authKey);
+
+    if (stored != null) {
+      final data = jsonDecode(stored);
+
+      pb.authStore.save(
+        data['token'],
+        data['record'] != null ? RecordModel.fromJson(data['record']) : null,
+      );
     }
 
-    _didLoadStoredAuth = true;
+    pb.authStore.onChange.listen((_) async {
+      if (pb.authStore.isValid) {
+        final data = jsonEncode({
+          'token': pb.authStore.token,
+          'record': pb.authStore.record?.toJson(),
+        });
 
-    final storedAuth = await storage.read(key: _authStorageKey);
-    if (storedAuth == null || storedAuth.isEmpty) {
-      return;
-    }
-
-    try {
-      final decoded = jsonDecode(storedAuth);
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Invalid stored auth payload');
+        await _storage.write(key: _authKey, value: data);
+      } else {
+        await _storage.delete(key: _authKey);
       }
-
-      final token = decoded['token'] as String? ?? '';
-      final rawRecord = decoded['record'];
-
-      if (token.isEmpty || rawRecord is! Map<String, dynamic>) {
-        await storage.delete(key: _authStorageKey);
-        return;
-      }
-
-      pb.authStore.save(token, RecordModel.fromJson(rawRecord));
-    } catch (_) {
-      pb.authStore.clear();
-      await storage.delete(key: _authStorageKey);
-    }
+    });
   }
 }

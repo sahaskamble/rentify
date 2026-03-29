@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rentify/main.dart';
 import 'package:rentify/providers/auth_provider.dart';
 import 'package:rentify/screens/auth/login_screen.dart';
 import 'package:rentify/theme/app_theme.dart';
+import 'package:rentify/widgets/custom_bottom_navbar.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -20,7 +20,7 @@ class AuthGate extends ConsumerWidget {
       return const LoginScreen();
     }
 
-    return const ListinsScreen();
+    return const CustomBottomNav();
   }
 }
 
