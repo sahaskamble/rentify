@@ -29,7 +29,6 @@ class _HomeContainerState extends ConsumerState<HomeContainer> {
           const _BrowseScreen(),
 
           // Tab 2: Add Listing (placeholder - FAB pressed)
-          Container(),
 
           // Tab 3: Chat
           const _ChatScreen(),
