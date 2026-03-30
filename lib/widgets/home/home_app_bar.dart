@@ -100,8 +100,7 @@ class HomeAppBar extends ConsumerWidget {
           ),
         ),
       ),
-      toolbarHeight: 160, // Adjusted for title + location + search bar
-      expandedHeight: 160,
+      toolbarHeight: 120, // Adjusted for title + location + search bar
     );
   }
 }

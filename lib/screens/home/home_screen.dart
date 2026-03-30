@@ -7,8 +7,10 @@ import 'package:rentify/screens/categories/categories_screen.dart';
 import 'package:rentify/screens/search/search_page.dart';
 import 'package:rentify/services/listing_service.dart';
 import 'package:rentify/theme/app_theme.dart';
+import 'package:rentify/widgets/home/brand_banner.dart';
 import 'package:rentify/widgets/home/category_section.dart';
 import 'package:rentify/widgets/home/home_app_bar.dart';
+import 'package:rentify/widgets/home/listings_grid.dart';
 import 'package:rentify/widgets/search/filter_bottom_sheet.dart';
 
 final categoriesProvider = FutureProvider<List<CategoriesRecord>>((ref) async {
@@ -119,7 +121,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         body: Column(
           children: [
             _buildBanner(),
-            Expanded(child: _buildListings()),
+            Expanded(
+              child: ListingsGrid(
+                listings: _listings,
+                hasMore: _hasMore,
+                isLoadingMore: _isLoadingMore,
+                onLoadMore: _loadMoreListings,
+                onTapListing: (listing) {},
+                onBookmarkTap: (listing) {},
+              ),
+            ),
           ],
         ),
       ),
@@ -128,188 +139,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildBanner() {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.accentStrong],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Rent Anything, Anytime',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 4),
-          Text(
-            'use karo, own mat karo',
-            style: TextStyle(fontSize: 14, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildListings() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_listings.isEmpty) {
-      return const Center(
-        child: Text(
-          'No listings added',
-          style: TextStyle(color: AppColors.muted),
-        ),
-      );
-    }
-
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-      ),
-      itemCount: _listings.length + (_hasMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= _listings.length) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final listing = _listings[index];
-        return _ListingCard(listing: listing);
-      },
-    );
-  }
-
-  IconData _getCategoryIcon(String? iconName) {
-    switch (iconName?.toLowerCase()) {
-      case 'car':
-        return Icons.directions_car;
-      case 'bike':
-        return Icons.two_wheeler;
-      case 'camera':
-        return Icons.camera_alt;
-      case 'electronics':
-        return Icons.devices;
-      case 'furniture':
-        return Icons.chair;
-      case 'tools':
-        return Icons.build;
-      case 'sports':
-        return Icons.sports_soccer;
-      case 'party':
-        return Icons.celebration;
-      default:
-        return Icons.category;
-    }
-  }
-}
-
-class _ListingCard extends StatelessWidget {
-  final ListingsRecord listing;
-
-  const _ListingCard({required this.listing});
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUrl = listing.images.isNotEmpty
-        ? 'https://backend.rentifystore.com/api/files/listings/${listing.id}/${listing.images.first}'
-        : null;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: imageUrl != null
-                ? Image.network(
-                    imageUrl,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        height: 120,
-                        color: AppColors.surfaceTint,
-                        child: const Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 120,
-                      color: AppColors.surfaceTint,
-                      child: const Icon(
-                        Icons.image,
-                        size: 40,
-                        color: AppColors.muted,
-                      ),
-                    ),
-                  )
-                : Container(
-                    height: 120,
-                    color: AppColors.surfaceTint,
-                    child: const Icon(
-                      Icons.image,
-                      size: 40,
-                      color: AppColors.muted,
-                    ),
-                  ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    listing.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '₹${listing.pricePerDay.toStringAsFixed(0)}/day',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return BrandBanner(
+      onExploreTap: () {},
+      headlineText: 'Rent Anything, Anytime',
+      subheadlineText: 'Use karo, Kharido mat',
+      buttonText: 'Explore Now',
     );
   }
 }
