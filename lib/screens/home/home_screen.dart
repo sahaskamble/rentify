@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rentify/generated/pocketbase/categories_record.dart';
 import 'package:rentify/generated/pocketbase/listings_record.dart';
 import 'package:rentify/providers/auth_provider.dart';
+import 'package:rentify/screens/categories/categories_screen.dart';
+import 'package:rentify/screens/search/search_page.dart';
 import 'package:rentify/services/listing_service.dart';
 import 'package:rentify/theme/app_theme.dart';
+import 'package:rentify/widgets/home/category_section.dart';
+import 'package:rentify/widgets/home/home_app_bar.dart';
+import 'package:rentify/widgets/search/filter_bottom_sheet.dart';
 
 final categoriesProvider = FutureProvider<List<CategoriesRecord>>((ref) async {
   final service = ListingService();
@@ -84,15 +89,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-    final categoriesAsync = ref.watch(categoriesProvider);
-
     return Scaffold(
       body: NestedScrollView(
         controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
-          _buildAppBar(authState),
-          _buildCategories(categoriesAsync),
+          HomeAppBar(
+            onLocationTap: () {},
+            onSearchTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchPage()),
+              );
+            },
+          ),
+          SliverToBoxAdapter(
+            child: CategorySection(
+              onSeeAll: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CategoriesScreen()),
+                );
+              },
+              onTapCategory: (category) {
+                ref.read(selectedCategoryProvider.notifier).state = category.id;
+              },
+            ),
+          ),
         ],
         body: Column(
           children: [
@@ -101,127 +123,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
       ),
-      drawer: const _AppDrawer(),
-    );
-  }
-
-  Widget _buildAppBar(AuthState authState) {
-    return SliverAppBar(
-      floating: true,
-      pinned: true,
-      expandedHeight: 0,
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-      ),
-      title: const Text(
-        'Rentify',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: () {},
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategories(AsyncValue<List<CategoriesRecord>> categoriesAsync) {
-    return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          categoriesAsync.when(
-            data: (categories) {
-              if (categories.isEmpty) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'No categories added',
-                    style: TextStyle(color: AppColors.muted),
-                  ),
-                );
-              }
-              return SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    final category = categories[index];
-                    final isSelected = _selectedCategoryId == category.id;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedCategoryId = isSelected
-                                ? null
-                                : category.id;
-                          });
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Icon(
-                                _getCategoryIcon(category.icon),
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: 70,
-                              child: Text(
-                                category.name,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : AppColors.muted,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-            loading: () => const SizedBox(
-              height: 100,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (_, __) => const SizedBox(
-              height: 100,
-              child: Center(child: Text('Failed to load categories')),
-            ),
-          ),
-        ],
-      ),
+      // drawer: const _AppDrawer(),
     );
   }
 
