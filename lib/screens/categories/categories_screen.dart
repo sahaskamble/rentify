@@ -6,24 +6,29 @@ import 'package:rentify/screens/listing_detail/listing_detail_screen.dart';
 import 'package:rentify/services/listing_service.dart';
 import 'package:rentify/theme/app_theme.dart';
 
-final categoriesGridProvider = FutureProvider<List<CategoriesRecord>>((ref) async {
+final categoriesGridProvider = FutureProvider<List<CategoriesRecord>>((
+  ref,
+) async {
   final pb = ListingService().pb;
-  final result = await pb.collection('categories').getList(
-    filter: 'is_active = true',
-    sort: 'sort_order',
-    perPage: 200,
-  );
+  final result = await pb
+      .collection('categories')
+      .getList(filter: 'is_active = true', sort: 'sort_order', perPage: 200);
   return result.items.map(CategoriesRecord.fromRecordModel).toList();
 });
 
 final categoryListingsProvider =
-    FutureProvider.family<List<ListingsRecord>, String>((ref, categoryId) async {
+    FutureProvider.family<List<ListingsRecord>, String>((
+      ref,
+      categoryId,
+    ) async {
       final pb = ListingService().pb;
-      final result = await pb.collection('listings').getList(
-        filter: "status = 'active' && category = '$categoryId'",
-        sort: '-created',
-        perPage: 200,
-      );
+      final result = await pb
+          .collection('listings')
+          .getList(
+            filter: "status = 'active' && category = '$categoryId'",
+            sort: '-created',
+            perPage: 200,
+          );
       return result.items.map(ListingsRecord.fromRecordModel).toList();
     });
 
@@ -41,7 +46,9 @@ class CategoriesScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isCategoryListings ? (categoryName ?? 'Category') : 'Browse Categories',
+          isCategoryListings
+              ? (categoryName ?? 'Category')
+              : 'Browse Categories',
           style: const TextStyle(
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
@@ -99,7 +106,9 @@ class _CategoriesGridView extends ConsumerWidget {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: _parseColor(category.color).withValues(alpha: 0.18),
+                  color: _parseColor(
+                    category.iconColor,
+                  ).withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.border),
                 ),
@@ -107,7 +116,10 @@ class _CategoriesGridView extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(category.icon ?? '📦', style: const TextStyle(fontSize: 32)),
+                    Text(
+                      category.icon ?? '📦',
+                      style: const TextStyle(fontSize: 32),
+                    ),
                     const Spacer(),
                     Text(
                       category.name,
@@ -125,7 +137,8 @@ class _CategoriesGridView extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => _ErrorView(onRetry: () => ref.invalidate(categoriesGridProvider)),
+      error: (error, _) =>
+          _ErrorView(onRetry: () => ref.invalidate(categoriesGridProvider)),
     );
   }
 }
@@ -140,7 +153,8 @@ class _CategoryListingsView extends ConsumerWidget {
     final listingsAsync = ref.watch(categoryListingsProvider(categoryId));
 
     return RefreshIndicator(
-      onRefresh: () async => ref.refresh(categoryListingsProvider(categoryId).future),
+      onRefresh: () async =>
+          ref.refresh(categoryListingsProvider(categoryId).future),
       child: listingsAsync.when(
         data: (listings) {
           if (listings.isEmpty) {
@@ -176,7 +190,8 @@ class _CategoryListingsView extends ConsumerWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ListingDetailScreen(listingId: listing.id),
+                      builder: (_) =>
+                          ListingDetailScreen(listingId: listing.id),
                     ),
                   );
                 },
@@ -191,11 +206,18 @@ class _CategoryListingsView extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(14),
+                          ),
                           child: imageUrl == null
                               ? Container(
                                   color: AppColors.surfaceTint,
-                                  child: const Center(child: Icon(Icons.image, color: AppColors.muted)),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.image,
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
                                 )
                               : Image.network(
                                   imageUrl,
@@ -203,7 +225,12 @@ class _CategoryListingsView extends ConsumerWidget {
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Container(
                                     color: AppColors.surfaceTint,
-                                    child: const Center(child: Icon(Icons.broken_image, color: AppColors.muted)),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        color: AppColors.muted,
+                                      ),
+                                    ),
                                   ),
                                 ),
                         ),
@@ -234,7 +261,10 @@ class _CategoryListingsView extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColors.surfaceTint,
                                 borderRadius: BorderRadius.circular(14),
@@ -259,7 +289,9 @@ class _CategoryListingsView extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _ErrorView(onRetry: () => ref.invalidate(categoryListingsProvider(categoryId))),
+        error: (error, _) => _ErrorView(
+          onRetry: () => ref.invalidate(categoryListingsProvider(categoryId)),
+        ),
       ),
     );
   }
@@ -297,7 +329,10 @@ class _ErrorView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Something went wrong', style: TextStyle(color: AppColors.muted)),
+          const Text(
+            'Something went wrong',
+            style: TextStyle(color: AppColors.muted),
+          ),
           const SizedBox(height: 10),
           ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
         ],

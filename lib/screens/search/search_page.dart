@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:rentify/screens/listing_detail/listing_detail_screen.dart';
 import 'package:rentify/services/listing_service.dart';
@@ -24,7 +25,9 @@ final searchResultsProvider = FutureProvider<List<RecordModel>>((ref) async {
     filters.add("category = '$selectedCategory'");
   }
   if (selectedCondition != null && selectedCondition != 'Any') {
-    filters.add("condition = '${selectedCondition.toLowerCase().replaceAll(' ', '_')}'");
+    filters.add(
+      "condition = '${selectedCondition.toLowerCase().replaceAll(' ', '_')}'",
+    );
   }
   filters.add('price_per_day >= ${priceRange.start.round()}');
   filters.add('price_per_day <= ${priceRange.end.round()}');
@@ -38,12 +41,14 @@ final searchResultsProvider = FutureProvider<List<RecordModel>>((ref) async {
     _ => '-created',
   };
 
-  final result = await ListingService().pb.collection('listings').getList(
-    filter: filters.join(' && '),
-    sort: sort,
-    expand: 'seller,category,location',
-    perPage: 50,
-  );
+  final result = await ListingService().pb
+      .collection('listings')
+      .getList(
+        filter: filters.join(' && '),
+        sort: sort,
+        expand: 'seller,category,location',
+        perPage: 50,
+      );
   return result.items.map((e) => e).toList();
 });
 
@@ -331,7 +336,8 @@ class _SearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final images = (listing.data['images'] as List<dynamic>? ?? []).cast<String>();
+    final images = (listing.data['images'] as List<dynamic>? ?? [])
+        .cast<String>();
     final imageUrl = images.isNotEmpty
         ? 'https://backend.rentifystore.com/api/files/listings/${listing.id}/${images.first}'
         : null;
@@ -401,14 +407,28 @@ class _SearchResultTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 12, color: Colors.grey.shade600),
+                        Icon(
+                          Icons.location_on,
+                          size: 12,
+                          color: Colors.grey.shade600,
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            (listing.expand['location']?.isNotEmpty == true ? listing.expand['location']!.first.data['city']?.toString() : null) ?? 'Location not set',
+                            (listing.expand['location']?.isNotEmpty == true
+                                    ? listing
+                                          .expand['location']!
+                                          .first
+                                          .data['city']
+                                          ?.toString()
+                                    : null) ??
+                                'Location not set',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                         ),
                       ],

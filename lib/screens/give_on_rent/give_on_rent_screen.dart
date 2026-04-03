@@ -62,7 +62,10 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Give on Rent', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink)),
+        title: const Text(
+          'Give on Rent',
+          style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.ink),
+        ),
         backgroundColor: AppColors.surface,
       ),
       body: Form(
@@ -83,17 +86,26 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(children: [
-                if (_step > 0)
-                  Expanded(child: OutlinedButton(onPressed: () => setState(() => _step -= 1), child: const Text('Back'))),
-                if (_step > 0) const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _submitting ? null : (_step == 3 ? _submit : _next),
-                    child: Text(_step == 3 ? 'Submit Listing' : 'Next'),
+              child: Row(
+                children: [
+                  if (_step > 0)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => setState(() => _step -= 1),
+                        child: const Text('Back'),
+                      ),
+                    ),
+                  if (_step > 0) const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _submitting
+                          ? null
+                          : (_step == 3 ? _submit : _next),
+                      child: Text(_step == 3 ? 'Submit Listing' : 'Next'),
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
           ],
         ),
@@ -102,115 +114,191 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
   }
 
   Widget _buildBasic(AsyncValue<List<CategoriesRecord>> categoriesAsync) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      TextFormField(controller: _title, maxLength: 100, decoration: const InputDecoration(labelText: 'Title'), validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
-      const SizedBox(height: 10),
-      TextFormField(controller: _description, maxLength: 500, maxLines: 5, decoration: const InputDecoration(labelText: 'Description'), validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
-      const SizedBox(height: 10),
-      categoriesAsync.when(
-        data: (categories) => DropdownButtonFormField<String>(
-          value: _category,
-          items: categories.map((e) => DropdownMenuItem(value: e.id, child: Text(e.name))).toList(),
-          onChanged: (value) => setState(() => _category = value),
-          decoration: const InputDecoration(labelText: 'Category'),
-          validator: (v) => v == null ? 'Required' : null,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _title,
+          maxLength: 100,
+          decoration: const InputDecoration(labelText: 'Title'),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Text('Failed to load categories'),
-      ),
-      const SizedBox(height: 10),
-      DropdownButtonFormField<String>(
-        value: _condition,
-        items: const [
-          DropdownMenuItem(value: 'brand_new', child: Text('Brand New')),
-          DropdownMenuItem(value: 'like_new', child: Text('Like New')),
-          DropdownMenuItem(value: 'good', child: Text('Good')),
-          DropdownMenuItem(value: 'fair', child: Text('Fair')),
-        ],
-        onChanged: (v) => setState(() => _condition = v ?? 'good'),
-        decoration: const InputDecoration(labelText: 'Condition'),
-      ),
-    ]);
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _description,
+          maxLength: 500,
+          maxLines: 5,
+          decoration: const InputDecoration(labelText: 'Description'),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+        ),
+        const SizedBox(height: 10),
+        categoriesAsync.when(
+          data: (categories) => DropdownButtonFormField<String>(
+            value: _category,
+            items: categories
+                .map((e) => DropdownMenuItem(value: e.id, child: Text(e.name)))
+                .toList(),
+            onChanged: (value) => setState(() => _category = value),
+            decoration: const InputDecoration(labelText: 'Category'),
+            validator: (v) => v == null ? 'Required' : null,
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const Text('Failed to load categories'),
+        ),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          value: _condition,
+          items: const [
+            DropdownMenuItem(value: 'brand_new', child: Text('Brand New')),
+            DropdownMenuItem(value: 'like_new', child: Text('Like New')),
+            DropdownMenuItem(value: 'good', child: Text('Good')),
+            DropdownMenuItem(value: 'fair', child: Text('Fair')),
+          ],
+          onChanged: (v) => setState(() => _condition = v ?? 'good'),
+          decoration: const InputDecoration(labelText: 'Condition'),
+        ),
+      ],
+    );
   }
 
   Widget _buildPhotos() {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      SizedBox(
-        height: 110,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: _images.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
-          itemBuilder: (_, i) {
-            return Stack(children: [
-              ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(File(_images[i].path), width: 110, height: 110, fit: BoxFit.cover)),
-              Positioned(
-                top: 4,
-                right: 4,
-                child: CircleAvatar(
-                  radius: 12,
-                  backgroundColor: Colors.black54,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    iconSize: 14,
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => setState(() => _images.removeAt(i)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 110,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _images.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              return Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.file(
+                      File(_images[i].path),
+                      width: 110,
+                      height: 110,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-              ),
-            ]);
-          },
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: CircleAvatar(
+                      radius: 12,
+                      backgroundColor: Colors.black54,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        iconSize: 14,
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => setState(() => _images.removeAt(i)),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
-      ),
-      const SizedBox(height: 12),
-      OutlinedButton.icon(onPressed: _pickPhotoSheet, icon: const Icon(Icons.add_a_photo), label: const Text('Add Photo')),
-      if (_images.isEmpty) const Padding(padding: EdgeInsets.only(top: 10), child: Text('At least 1 image required', style: TextStyle(color: Colors.red))),
-    ]);
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: _pickPhotoSheet,
+          icon: const Icon(Icons.add_a_photo),
+          label: const Text('Add Photo'),
+        ),
+        if (_images.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: Text(
+              'At least 1 image required',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildPricing() {
-    return Column(children: [
-      TextFormField(
-        controller: _priceDay,
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(labelText: 'Price per day', prefixText: '₹ '),
-        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-        onChanged: (v) {
-          final day = double.tryParse(v);
-          if (day != null && _priceMonth.text.isEmpty) {
-            _priceMonth.text = (day * 25).toStringAsFixed(0);
-          }
-        },
-      ),
-      const SizedBox(height: 10),
-      TextFormField(controller: _priceMonth, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Price per month', prefixText: '₹ ')),
-      const SizedBox(height: 10),
-      TextFormField(controller: _deposit, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Deposit amount', prefixText: '₹ ')),
-    ]);
+    return Column(
+      children: [
+        TextFormField(
+          controller: _priceDay,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Price per day',
+            prefixText: '₹ ',
+          ),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+          onChanged: (v) {
+            final day = double.tryParse(v);
+            if (day != null && _priceMonth.text.isEmpty) {
+              _priceMonth.text = (day * 25).toStringAsFixed(0);
+            }
+          },
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _priceMonth,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Price per month',
+            prefixText: '₹ ',
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _deposit,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Deposit amount',
+            prefixText: '₹ ',
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildLocation() {
-    return Column(children: [
-      TextFormField(controller: _city, decoration: const InputDecoration(labelText: 'City'), validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
-      const SizedBox(height: 10),
-      TextFormField(controller: _area, decoration: const InputDecoration(labelText: 'Area/Locality'), validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null),
-      const SizedBox(height: 10),
-      TextFormField(controller: _address, decoration: const InputDecoration(labelText: 'Full address')),
-      const SizedBox(height: 10),
-      TextFormField(controller: _pincode, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Pincode')),
-      const SizedBox(height: 10),
-      OutlinedButton(
-        onPressed: () async {
-          await ref.read(locationProvider.notifier).fetchCurrentLocation();
-          final location = ref.read(locationProvider).valueOrNull;
-          if (location != null) {
-            _city.text = location.city;
-            _area.text = location.area;
-          }
-        },
-        child: const Text('Use My Location'),
-      ),
-    ]);
+    return Column(
+      children: [
+        TextFormField(
+          controller: _city,
+          decoration: const InputDecoration(labelText: 'City'),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _area,
+          decoration: const InputDecoration(labelText: 'Area/Locality'),
+          validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _address,
+          decoration: const InputDecoration(labelText: 'Full address'),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _pincode,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Pincode'),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton(
+          onPressed: () async {
+            await ref.read(locationProvider.notifier).fetchCurrentLocation();
+            final location = ref.read(locationProvider).value;
+            if (location != null) {
+              _city.text = location.city;
+              _area.text = location.area;
+            }
+          },
+          child: const Text('Use My Location'),
+        ),
+      ],
+    );
   }
 
   void _next() {
@@ -228,26 +316,49 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
     await showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ListTile(title: const Text('Camera'), onTap: () async {
-            final image = await _picker.pickImage(source: ImageSource.camera, imageQuality: 70);
-            if (image != null && _images.length < 5) setState(() => _images.add(image));
-            if (mounted) Navigator.pop(context);
-          }),
-          ListTile(title: const Text('Gallery'), onTap: () async {
-            final image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-            if (image != null && _images.length < 5) setState(() => _images.add(image));
-            if (mounted) Navigator.pop(context);
-          }),
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('Camera'),
+              onTap: () async {
+                final image = await _picker.pickImage(
+                  source: ImageSource.camera,
+                  imageQuality: 70,
+                );
+                if (image != null && _images.length < 5)
+                  setState(() => _images.add(image));
+                if (mounted) Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('Gallery'),
+              onTap: () async {
+                final image = await _picker.pickImage(
+                  source: ImageSource.gallery,
+                  imageQuality: 70,
+                );
+                if (image != null && _images.length < 5)
+                  setState(() => _images.add(image));
+                if (mounted) Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Future<void> _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false) || _images.isEmpty) return;
+    if (!(_formKey.currentState?.validate() ?? false) || _images.isEmpty) {
+      _showError('Please fill all required fields and add at least one image');
+      return;
+    }
     final user = ref.read(authStateProvider).user;
-    if (user == null || _category == null) return;
+    if (user == null || _category == null) {
+      _showError('Please log in to list an item');
+      return;
+    }
     setState(() => _submitting = true);
 
     try {
@@ -256,7 +367,7 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
         files.add(await http.MultipartFile.fromPath('images', image.path));
       }
 
-      final listing = await ListingService().pb.collection('listings').create(body: {
+      final listingBody = {
         'title': _title.text.trim(),
         'description': _description.text.trim(),
         'category': _category,
@@ -264,22 +375,35 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
         'condition': _condition,
         'status': 'active',
         'price_per_day': double.tryParse(_priceDay.text) ?? 0,
-        'price_per_month': _priceMonth.text.trim().isEmpty ? null : double.tryParse(_priceMonth.text),
-        'deposit_amount': _deposit.text.trim().isEmpty ? null : double.tryParse(_deposit.text),
-        'security_deposit': _deposit.text.trim().isEmpty ? 0 : double.tryParse(_deposit.text) ?? 0,
+        'price_per_month': _priceMonth.text.trim().isEmpty
+            ? null
+            : double.tryParse(_priceMonth.text),
+        'deposit_amount': _deposit.text.trim().isEmpty
+            ? null
+            : double.tryParse(_deposit.text),
+        'security_deposit': _deposit.text.trim().isEmpty
+            ? 0
+            : double.tryParse(_deposit.text) ?? 0,
         'quantity': 1,
         'is_featured': false,
-        'images': files,
-      });
+      };
 
-      await ListingService().pb.collection('listing_locations').create(body: {
-        'listing': listing.id,
-        'city': _city.text.trim(),
-        'address': _area.text.trim(),
-        'state': '',
-        'pincode': _pincode.text.trim(),
-        'country': 'India',
-      });
+      final listing = await ListingService().pb
+          .collection('listings')
+          .create(body: listingBody, files: files);
+
+      await ListingService().pb
+          .collection('listing_locations')
+          .create(
+            body: {
+              'listing': listing.id,
+              'city': _city.text.trim(),
+              'address': _area.text.trim(),
+              'state': '',
+              'pincode': _pincode.text.trim(),
+              'country': 'India',
+            },
+          );
 
       if (!mounted) return;
       await showDialog(
@@ -288,27 +412,44 @@ class _GiveOnRentScreenState extends ConsumerState<GiveOnRentScreen> {
           title: const Text('Listing Created'),
           content: const Text('Your item is now live on Rentify.'),
           actions: [
-            TextButton(onPressed: () {
-              Navigator.pop(context);
-              _formKey.currentState?.reset();
-              setState(() {
-                _step = 0;
-                _images.clear();
-              });
-            }, child: const Text('List Another')),
-            ElevatedButton(onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                this.context,
-                MaterialPageRoute(builder: (_) => CategoriesScreen(categoryId: _category)),
-              );
-            }, child: const Text('View My Listing')),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _formKey.currentState?.reset();
+                setState(() {
+                  _step = 0;
+                  _images.clear();
+                });
+              },
+              child: const Text('List Another'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  this.context,
+                  MaterialPageRoute(
+                    builder: (_) => CategoriesScreen(categoryId: _category),
+                  ),
+                );
+              },
+              child: const Text('View My Listing'),
+            ),
           ],
         ),
       );
+    } catch (e, st) {
+      debugPrint('Submit error: $e\n$st');
+      if (mounted) _showError('Failed to create listing: $e');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 }
 

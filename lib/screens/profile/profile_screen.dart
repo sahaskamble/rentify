@@ -8,15 +8,16 @@ import 'package:rentify/screens/rentals/my_rentals_screen.dart';
 import 'package:rentify/services/profile_service.dart';
 import 'package:rentify/theme/app_theme.dart';
 
-
-final userVerificationsProvider = FutureProvider<List<UserVerificationsRecord>>((ref) async {
-  final user = ref.watch(authStateProvider).user;
-  if (user == null) return [];
-  final result = await ProfileService().pb
-      .collection('user_verifications')
-      .getList(filter: "user = '${user.id}'", perPage: 100);
-  return result.items.map(UserVerificationsRecord.fromRecordModel).toList();
-});
+final userVerificationsProvider = FutureProvider<List<UserVerificationsRecord>>(
+  (ref) async {
+    final user = ref.watch(authStateProvider).user;
+    if (user == null) return [];
+    final result = await ProfileService().pb
+        .collection('user_verifications')
+        .getList(filter: "user = '${user.id}'", perPage: 100);
+    return result.items.map(UserVerificationsRecord.fromRecordModel).toList();
+  },
+);
 
 /// Professional Profile Screen with real data from PocketBase
 ///
@@ -237,31 +238,49 @@ class _ProfileHeader extends ConsumerWidget {
             ),
 
             const SizedBox(height: 12),
-            ref.watch(userVerificationsProvider).maybeWhen(
-              data: (items) {
-                final approved = items.any(
-                  (e) => e.status == UserVerificationsRecordStatusEnum.approved,
-                );
-                if (!approved) return const SizedBox.shrink();
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.verified_user_rounded, size: 14, color: Colors.green.shade700),
-                      const SizedBox(width: 6),
-                      Text('Verified User', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade700)),
-                    ],
-                  ),
-                );
-              },
-              orElse: () => const SizedBox.shrink(),
-            ),
+            ref
+                .watch(userVerificationsProvider)
+                .maybeWhen(
+                  data: (items) {
+                    final approved = items.any(
+                      (e) =>
+                          e.status ==
+                          UserVerificationsRecordStatusEnum.approved,
+                    );
+                    if (!approved) return const SizedBox.shrink();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.green.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified_user_rounded,
+                            size: 14,
+                            color: Colors.green.shade700,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Verified User',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  orElse: () => const SizedBox.shrink(),
+                ),
           ],
         ),
       ),
@@ -427,7 +446,10 @@ class _QuickActionsSection extends ConsumerWidget {
             icon: Icons.edit_rounded,
             label: 'Edit Profile',
             onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              );
             },
           ),
           const SizedBox(width: 12),
@@ -454,7 +476,6 @@ class _QuickActionsSection extends ConsumerWidget {
   }
 }
 
-
 void _showVerificationBottomSheet(BuildContext context, WidgetRef ref) {
   final statusMap = {
     UserVerificationsRecordTypeEnum.otp: 'OTP',
@@ -466,12 +487,17 @@ void _showVerificationBottomSheet(BuildContext context, WidgetRef ref) {
   showModalBottomSheet(
     context: context,
     backgroundColor: AppColors.surface,
-    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
     builder: (_) {
       return Consumer(
         builder: (context, ref, __) {
-          final verifications = ref.watch(userVerificationsProvider).valueOrNull ?? [];
-          UserVerificationsRecordStatusEnum? statusFor(UserVerificationsRecordTypeEnum type) {
+          final verifications =
+              ref.watch(userVerificationsProvider).value ?? [];
+          UserVerificationsRecordStatusEnum? statusFor(
+            UserVerificationsRecordTypeEnum type,
+          ) {
             for (final item in verifications) {
               if (item.type == type) return item.status;
             }
@@ -479,7 +505,8 @@ void _showVerificationBottomSheet(BuildContext context, WidgetRef ref) {
           }
 
           Widget row(UserVerificationsRecordTypeEnum type) {
-            final status = statusFor(type) ?? UserVerificationsRecordStatusEnum.pending;
+            final status =
+                statusFor(type) ?? UserVerificationsRecordStatusEnum.pending;
             return ListTile(
               title: Text(statusMap[type]!),
               subtitle: Text(status.name),
@@ -490,8 +517,15 @@ void _showVerificationBottomSheet(BuildContext context, WidgetRef ref) {
                         context: context,
                         builder: (_) => AlertDialog(
                           title: Text(statusMap[type]!),
-                          content: const Text('This step is pending. Submit required details/documents to proceed.'),
-                          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                          content: const Text(
+                            'This step is pending. Submit required details/documents to proceed.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('OK'),
+                            ),
+                          ],
                         ),
                       );
                     }
@@ -504,7 +538,10 @@ void _showVerificationBottomSheet(BuildContext context, WidgetRef ref) {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 12),
-                const Text('Verification Steps', style: TextStyle(fontWeight: FontWeight.w700)),
+                const Text(
+                  'Verification Steps',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 row(UserVerificationsRecordTypeEnum.otp),
                 row(UserVerificationsRecordTypeEnum.govtId),
                 row(UserVerificationsRecordTypeEnum.selfie),
@@ -615,14 +652,12 @@ class _AccountDetailsSection extends ConsumerWidget {
             // Location from seller profile
             sellerProfile.when(
               data: (profile) {
-                final city = profile?.city ?? 'Not provided';
-                final state = profile?.state ?? '';
-                final location = state.isNotEmpty ? '$city, $state' : city;
+                final businessName = profile?.businessName ?? 'Not provided';
 
                 return _DetailRow(
                   icon: Icons.location_on_rounded,
                   label: 'Location',
-                  value: location,
+                  value: businessName,
                 );
               },
               loading: () => _DetailRow(
@@ -773,7 +808,10 @@ class _SettingsMenuSection extends StatelessWidget {
               title: 'My Rentals',
               subtitle: 'Track your renting & renting out history',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyRentalsScreen()),
+                );
               },
             ),
             _SettingsTile(

@@ -127,40 +127,43 @@ class _CategoryTile extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Icon container (80x80)
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: 80,
+        height: 110,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Icon container (80x80)
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              alignment: Alignment.center,
+              child: iconUrl != null
+                  ? _CategoryIcon(imageUrl: iconUrl)
+                  : Icon(Icons.category, size: 36, color: Colors.grey.shade300),
             ),
-            alignment: Alignment.center,
-            child: iconUrl != null
-                ? _CategoryIcon(imageUrl: iconUrl)
-                : Icon(Icons.category, size: 36, color: Colors.grey.shade300),
-          ),
-          const SizedBox(height: 6),
+            const SizedBox(height: 4),
 
-          // Category name
-          SizedBox(
-            width: 80,
-            child: Text(
-              record.name,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.ink,
+            // Category name
+            Expanded(
+              child: Text(
+                record.name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.ink,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

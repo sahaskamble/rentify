@@ -112,7 +112,7 @@ class _HomeBottomNavBarState extends State<HomeBottomNavBar>
                   painter: _NotchPainter(
                     notchCX: pillCX,
                     notchR: _notchR,
-                    color: AppColors.surface,
+                    color: AppColors.primary,
                   ),
                   child: _IconsRow(
                     icons: _icons,
@@ -211,11 +211,7 @@ class _IconsRow extends StatelessWidget {
                 children: [
                   Opacity(
                     opacity: iconOpacity,
-                    child: Icon(
-                      icons[i],
-                      size: 28,
-                      color: Colors.grey.shade600,
-                    ),
+                    child: Icon(icons[i], size: 28, color: AppColors.surface),
                   ),
                   const SizedBox(height: 2),
                   AnimatedOpacity(
@@ -226,7 +222,7 @@ class _IconsRow extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
+                        color: AppColors.surface,
                         height: 1.0,
                       ),
                     ),
