@@ -2,7 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rentify/providers/auth_provider.dart';
 import 'package:rentify/providers/profile_provider.dart';
+import 'package:rentify/generated/pocketbase/user_verifications_record.dart';
+import 'package:rentify/screens/profile/edit_profile_screen.dart';
+import 'package:rentify/screens/rentals/my_rentals_screen.dart';
+import 'package:rentify/services/profile_service.dart';
 import 'package:rentify/theme/app_theme.dart';
+
+
+final userVerificationsProvider = FutureProvider<List<UserVerificationsRecord>>((ref) async {
+  final user = ref.watch(authStateProvider).user;
+  if (user == null) return [];
+  final result = await ProfileService().pb
+      .collection('user_verifications')
+      .getList(filter: "user = '${user.id}'", perPage: 100);
+  return result.items.map(UserVerificationsRecord.fromRecordModel).toList();
+});
 
 /// Professional Profile Screen with real data from PocketBase
 ///
@@ -89,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 /// Profile header with avatar, name, email, rating
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   final dynamic user;
 
   const _ProfileHeader({required this.user});
@@ -108,7 +122,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final initials = _getInitials(user.name);
     final avatarUrl = _getAvatarUrl();
 
@@ -222,34 +236,31 @@ class _ProfileHeader extends StatelessWidget {
               },
             ),
 
-            // Verification badge
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.green.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.verified_user_rounded,
-                    size: 14,
-                    color: Colors.green.shade700,
+            ref.watch(userVerificationsProvider).maybeWhen(
+              data: (items) {
+                final approved = items.any(
+                  (e) => e.status == UserVerificationsRecordStatusEnum.approved,
+                );
+                if (!approved) return const SizedBox.shrink();
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.shade200),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Verified User',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.green.shade700,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.verified_user_rounded, size: 14, color: Colors.green.shade700),
+                      const SizedBox(width: 6),
+                      Text('Verified User', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade700)),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
+              orElse: () => const SizedBox.shrink(),
             ),
           ],
         ),
@@ -400,14 +411,14 @@ class _StatCard extends StatelessWidget {
 }
 
 /// Quick actions: Edit profile, Verify ID, Settings
-class _QuickActionsSection extends StatelessWidget {
+class _QuickActionsSection extends ConsumerWidget {
   final BuildContext context;
   final dynamic user;
 
   const _QuickActionsSection({required this.context, required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -416,10 +427,7 @@ class _QuickActionsSection extends StatelessWidget {
             icon: Icons.edit_rounded,
             label: 'Edit Profile',
             onTap: () {
-              // TODO: Navigate to edit profile screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Edit profile coming soon')),
-              );
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen()));
             },
           ),
           const SizedBox(width: 12),
@@ -427,9 +435,7 @@ class _QuickActionsSection extends StatelessWidget {
             icon: Icons.verified_user_rounded,
             label: 'Verify ID',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('ID verification coming soon')),
-              );
+              _showVerificationBottomSheet(context, ref);
             },
           ),
           const SizedBox(width: 12),
@@ -446,6 +452,71 @@ class _QuickActionsSection extends StatelessWidget {
       ),
     );
   }
+}
+
+
+void _showVerificationBottomSheet(BuildContext context, WidgetRef ref) {
+  final statusMap = {
+    UserVerificationsRecordTypeEnum.otp: 'OTP',
+    UserVerificationsRecordTypeEnum.govtId: 'Govt ID',
+    UserVerificationsRecordTypeEnum.selfie: 'Selfie',
+    UserVerificationsRecordTypeEnum.bankAccount: 'Bank Account',
+  };
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppColors.surface,
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (_) {
+      return Consumer(
+        builder: (context, ref, __) {
+          final verifications = ref.watch(userVerificationsProvider).valueOrNull ?? [];
+          UserVerificationsRecordStatusEnum? statusFor(UserVerificationsRecordTypeEnum type) {
+            for (final item in verifications) {
+              if (item.type == type) return item.status;
+            }
+            return null;
+          }
+
+          Widget row(UserVerificationsRecordTypeEnum type) {
+            final status = statusFor(type) ?? UserVerificationsRecordStatusEnum.pending;
+            return ListTile(
+              title: Text(statusMap[type]!),
+              subtitle: Text(status.name),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: status == UserVerificationsRecordStatusEnum.pending
+                  ? () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: Text(statusMap[type]!),
+                          content: const Text('This step is pending. Submit required details/documents to proceed.'),
+                          actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+                        ),
+                      );
+                    }
+                  : null,
+            );
+          }
+
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 12),
+                const Text('Verification Steps', style: TextStyle(fontWeight: FontWeight.w700)),
+                row(UserVerificationsRecordTypeEnum.otp),
+                row(UserVerificationsRecordTypeEnum.govtId),
+                row(UserVerificationsRecordTypeEnum.selfie),
+                row(UserVerificationsRecordTypeEnum.bankAccount),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        },
+      );
+    },
+  );
 }
 
 /// Individual action button
@@ -695,6 +766,14 @@ class _SettingsMenuSection extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Notifications coming soon')),
                 );
+              },
+            ),
+            _SettingsTile(
+              icon: Icons.receipt_long_rounded,
+              title: 'My Rentals',
+              subtitle: 'Track your renting & renting out history',
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
               },
             ),
             _SettingsTile(

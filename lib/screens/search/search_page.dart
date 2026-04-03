@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
-import 'package:rentify/generated/pocketbase/listings_record.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:rentify/screens/listing_detail/listing_detail_screen.dart';
 import 'package:rentify/services/listing_service.dart';
 import 'package:rentify/theme/app_theme.dart';
 import 'package:rentify/widgets/search/filter_bottom_sheet.dart';
@@ -9,34 +9,43 @@ import 'package:rentify/widgets/search/filter_bottom_sheet.dart';
 // Riverpod provider for search results with debouncing
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-final searchResultsProvider =
-    FutureProvider.family<List<ListingsRecord>, String>((ref, query) async {
-      if (query.isEmpty) {
-        return [];
-      }
+final searchResultsProvider = FutureProvider<List<RecordModel>>((ref) async {
+  final query = ref.watch(searchQueryProvider);
+  if (query.isEmpty) return [];
 
-      final service = ListingService();
-      // Search by title with wildcard filter
-      final filter = "status = 'active' && title ~ '$query'";
+  final selectedCategory = ref.watch(selectedCategoryProvider);
+  final selectedCondition = ref.watch(selectedConditionProvider);
+  final selectedSort = ref.watch(selectedSortProvider);
+  final priceRange = ref.watch(priceRangeProvider);
+  final cityFilter = ref.watch(cityFilterProvider);
 
-      try {
-        final result = await service.pb
-            .collection('listings')
-            .getList(
-              filter: filter,
-              sort: '-created',
-              expand: 'seller,category',
-              perPage: 50,
-            );
+  final filters = <String>["status = 'active'", "title ~ '$query'"];
+  if (selectedCategory != null && selectedCategory.isNotEmpty) {
+    filters.add("category = '$selectedCategory'");
+  }
+  if (selectedCondition != null && selectedCondition != 'Any') {
+    filters.add("condition = '${selectedCondition.toLowerCase().replaceAll(' ', '_')}'");
+  }
+  filters.add('price_per_day >= ${priceRange.start.round()}');
+  filters.add('price_per_day <= ${priceRange.end.round()}');
+  if (cityFilter.trim().isNotEmpty) {
+    filters.add("location.city ~ '${cityFilter.trim()}'");
+  }
 
-        return result.items
-            .map((e) => ListingsRecord.fromJson(e.toJson()))
-            .toList();
-      } catch (e) {
-        // Return empty list on error
-        return [];
-      }
-    });
+  final sort = switch (selectedSort) {
+    'price_low' => 'price_per_day',
+    'price_high' => '-price_per_day',
+    _ => '-created',
+  };
+
+  final result = await ListingService().pb.collection('listings').getList(
+    filter: filters.join(' && '),
+    sort: sort,
+    expand: 'seller,category,location',
+    perPage: 50,
+  );
+  return result.items.map((e) => e).toList();
+});
 
 // Provider for recent searches (local storage via shared_preferences stub)
 final recentSearchesProvider = StateProvider<List<String>>((ref) {
@@ -104,7 +113,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final query = ref.watch(searchQueryProvider);
-    final searchResults = ref.watch(searchResultsProvider(query));
+    final searchResults = ref.watch(searchResultsProvider);
     final recentSearches = ref.watch(recentSearchesProvider);
 
     return Scaffold(
@@ -260,7 +269,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   }
 
   /// Search results list view
-  Widget _buildSearchResults(AsyncValue<List<ListingsRecord>> results) {
+  Widget _buildSearchResults(AsyncValue<List<RecordModel>> results) {
     return results.when(
       data: (listings) {
         if (listings.isEmpty) {
@@ -316,19 +325,25 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
 /// Individual search result tile
 class _SearchResultTile extends StatelessWidget {
-  final ListingsRecord listing;
+  final RecordModel listing;
 
   const _SearchResultTile({required this.listing});
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = listing.images.isNotEmpty
-        ? 'https://backend.rentifystore.com/api/files/listings/${listing.id}/${listing.images.first}'
+    final images = (listing.data['images'] as List<dynamic>? ?? []).cast<String>();
+    final imageUrl = images.isNotEmpty
+        ? 'https://backend.rentifystore.com/api/files/listings/${listing.id}/${images.first}'
         : null;
 
     return GestureDetector(
       onTap: () {
-        // Navigator.pushNamed(context, '/listing', arguments: listing.id);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ListingDetailScreen(listingId: listing.id),
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -364,7 +379,7 @@ class _SearchResultTile extends StatelessWidget {
                   children: [
                     // Title
                     Text(
-                      listing.title,
+                      listing.getStringValue('title'),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -376,7 +391,7 @@ class _SearchResultTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     // Price per day
                     Text(
-                      '₹${listing.pricePerDay.toStringAsFixed(0)}/day',
+                      '₹${((listing.data['price_per_day'] as num?)?.toDouble() ?? 0).toStringAsFixed(0)}/day',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -384,24 +399,16 @@ class _SearchResultTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Location (stub: hardcoded for now)
                     Row(
                       children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 12,
-                          color: Colors.grey.shade600,
-                        ),
+                        Icon(Icons.location_on, size: 12, color: Colors.grey.shade600),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            'San Francisco, CA',
+                            (listing.expand['location']?.isNotEmpty == true ? listing.expand['location']!.first.data['city']?.toString() : null) ?? 'Location not set',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                           ),
                         ),
                       ],
