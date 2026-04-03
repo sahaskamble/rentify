@@ -96,7 +96,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         controller: _scrollController,
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           HomeAppBar(
-            onLocationTap: () {},
             onSearchTap: () {
               Navigator.push(
                 context,

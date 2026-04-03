@@ -4,6 +4,7 @@ import 'package:rentify/providers/auth_provider.dart';
 import 'package:rentify/screens/auth/login_screen.dart';
 import 'package:rentify/theme/app_theme.dart';
 import 'package:rentify/widgets/home/home_container.dart';
+import 'package:rentify/widgets/location_permission_handler.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -19,6 +20,11 @@ class AuthGate extends ConsumerWidget {
     if (!authState.isAuthenticated) {
       return const LoginScreen();
     }
+
+    // Request location permission after successful authentication
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      LocationPermissionHandler.requestLocationPermission(context);
+    });
 
     return const HomeContainer();
   }

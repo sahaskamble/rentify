@@ -1,122 +1,101 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rentify/providers/auth_provider.dart';
+import 'package:rentify/providers/home_provider.dart';
+import 'package:rentify/providers/location_provider.dart';
 import 'package:rentify/theme/app_theme.dart';
+import 'package:rentify/widgets/location_picker_bottom_sheet.dart';
 
-/// HomeAppBar is a SliverAppBar widget that displays:
-/// - App name "Rentify" with a location selector
-/// - User profile avatar
-/// - SearchBar widget below (non-focusable, tappable)
+/// HomeAppBar is a SliverAppBar - scrollable, not sticky
 class HomeAppBar extends ConsumerWidget {
-  /// Called when location text is tapped to show location picker
-  final VoidCallback? onLocationTap;
-
-  /// Called when SearchBar is tapped to navigate to SearchPage
   final VoidCallback? onSearchTap;
 
-  const HomeAppBar({super.key, this.onLocationTap, this.onSearchTap});
+  const HomeAppBar({super.key, this.onSearchTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
+    final locationState = ref.watch(locationProvider);
 
     return SliverAppBar(
-      pinned: true,
+      pinned: false, // NOT sticky - scrolls away
+      floating: false, // Doesn't float back
+      snap: false,
       elevation: 0,
       backgroundColor: AppColors.surface,
       surfaceTintColor: Colors.transparent,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: AppColors.surface,
-          padding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 8,
-            bottom: 8,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top row: App name + Profile avatar
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Left: App name + Location
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Rentify',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        const SizedBox(height: 0),
-                        // Location row (tappable)
-                        GestureDetector(
-                          onTap: onLocationTap,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 14,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'San Francisco, CA',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.muted,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                Icons.expand_more,
-                                size: 14,
-                                color: AppColors.muted,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+      toolbarHeight: 160,
+      title: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: Rentify title + Profile avatar
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Rentify',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
                   ),
-                  // Right: User avatar
-                  _UserAvatar(authState: authState),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // SearchBar (tappable, non-focusable)
-              _HomeSearchBar(onTap: onSearchTap),
-            ],
-          ),
+                ),
+                _UserAvatar(authState: authState, ref: ref),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Location chip - under title
+            locationState
+                .whenData((location) {
+                  return _LocationChip(
+                    location: location,
+                    onTap: () => _showLocationPicker(context),
+                  );
+                })
+                .maybeWhen(
+                  data: (widget) => widget,
+                  orElse: () => _LocationChip(
+                    location: null,
+                    onTap: () => _showLocationPicker(context),
+                  ),
+                ),
+            const SizedBox(height: 12),
+
+            // SearchBar
+            _HomeSearchBar(onTap: onSearchTap),
+          ],
         ),
       ),
-      toolbarHeight: 120, // Adjusted for title + location + search bar
+    );
+  }
+
+  void _showLocationPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => LocationPickerBottomSheet(onLocationConfirmed: () {}),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
     );
   }
 }
 
-/// User avatar circle with initials
+/// User avatar with initials
 class _UserAvatar extends StatelessWidget {
   final AuthState authState;
+  final WidgetRef ref;
 
-  const _UserAvatar({required this.authState});
+  const _UserAvatar({required this.authState, required this.ref});
 
   String _getInitials(String? name) {
     if (name == null || name.isEmpty) return 'U';
     final parts = name.trim().split(' ');
-    if (parts.length == 1) {
-      return parts[0][0].toUpperCase();
-    }
+    if (parts.length == 1) return parts[0][0].toUpperCase();
     return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
   }
 
@@ -126,18 +105,31 @@ class _UserAvatar extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Navigate to ProfileScreen using pushNamed
-        Navigator.pushNamed(context, '/profile');
+        // Navigate to profile tab (index 3) in bottom nav bar
+        ref.read(selectedHomeTabProvider.notifier).state = 3;
       },
-      child: CircleAvatar(
-        radius: 22,
-        backgroundColor: AppColors.primary,
-        child: Text(
-          initials,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: AppColors.primary,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            initials,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
@@ -145,7 +137,54 @@ class _UserAvatar extends StatelessWidget {
   }
 }
 
-/// Non-focusable SearchBar widget for HomeAppBar
+/// Location chip with clean design
+class _LocationChip extends StatelessWidget {
+  final dynamic location;
+  final VoidCallback onTap;
+
+  const _LocationChip({required this.location, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLocation = location?.hasLocation ?? false;
+    final displayText = hasLocation
+        ? location?.displayAddress ?? 'Select Location'
+        : 'Select Location';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(
+            Icons.location_on_rounded,
+            size: 18,
+            color: hasLocation ? AppColors.primary : Colors.grey.shade600,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              displayText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: hasLocation ? AppColors.primary : Colors.grey.shade700,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.expand_more_rounded,
+            size: 18,
+            color: hasLocation ? AppColors.primary : Colors.grey.shade500,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// SearchBar
 class _HomeSearchBar extends StatelessWidget {
   final VoidCallback? onTap;
 
@@ -159,23 +198,24 @@ class _HomeSearchBar extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           color: Colors.grey.shade100,
+          border: Border.all(color: Colors.grey.shade200),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            Icon(Icons.search, size: 18, color: Colors.grey.shade600),
-            const SizedBox(width: 8),
+            Icon(Icons.search_rounded, size: 18, color: Colors.grey.shade600),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Search for anything...',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   color: Colors.grey.shade500,
                   fontWeight: FontWeight.w400,
                 ),
               ),
             ),
-            Icon(Icons.mic, size: 18, color: Colors.grey.shade600),
+            Icon(Icons.mic_none_rounded, size: 18, color: Colors.grey.shade600),
           ],
         ),
       ),

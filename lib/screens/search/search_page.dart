@@ -121,73 +121,90 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     return AppBar(
       backgroundColor: AppColors.surface,
       elevation: 0,
-      leadingWidth: 40,
-      leading: Align(
-        alignment: Alignment.centerRight,
+      surfaceTintColor: Colors.transparent,
+      toolbarHeight: 60,
+      titleSpacing: 0,
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () => Navigator.pop(context),
-            radius: 24,
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              size: 18,
-              color: AppColors.ink,
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                size: 16,
+                color: AppColors.ink,
+              ),
             ),
           ),
         ),
       ),
-      title: Expanded(
-        child: Container(
-          height: 40,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.grey.shade100,
-          ),
-          child: TextField(
-            controller: _searchController,
-            focusNode: _focusNode,
-            onChanged: _onSearchChanged,
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-              prefixIcon: Icon(
-                Icons.search,
-                size: 18,
-                color: Colors.grey.shade600,
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? GestureDetector(
-                      onTap: () {
-                        _searchController.clear();
-                        ref.read(searchQueryProvider.notifier).state = '';
-                      },
-                      child: Icon(
-                        Icons.close,
-                        size: 18,
-                        color: Colors.grey.shade600,
-                      ),
-                    )
-                  : null,
+      title: Container(
+        height: 42,
+        margin: const EdgeInsets.only(right: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: Colors.grey.shade100,
+        ),
+        child: TextField(
+          controller: _searchController,
+          focusNode: _focusNode,
+          onChanged: _onSearchChanged,
+          decoration: InputDecoration(
+            hintText: 'Search...',
+            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
             ),
-            style: const TextStyle(fontSize: 14, color: AppColors.ink),
+            prefixIcon: Icon(
+              Icons.search,
+              size: 18,
+              color: Colors.grey.shade600,
+            ),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      ref.read(searchQueryProvider.notifier).state = '';
+                    },
+                    child: Icon(
+                      Icons.close,
+                      size: 18,
+                      color: Colors.grey.shade600,
+                    ),
+                  )
+                : null,
           ),
+          style: const TextStyle(fontSize: 14, color: AppColors.ink),
         ),
       ),
       actions: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.only(right: 12),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               onTap: _onFilterTap,
-              radius: 24,
-              child: const Icon(Icons.tune, size: 20, color: AppColors.ink),
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.tune, size: 18, color: AppColors.ink),
+              ),
             ),
           ),
         ),

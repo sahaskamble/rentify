@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rentify/providers/home_provider.dart';
+import 'package:rentify/screens/chat/chat_screen.dart';
+import 'package:rentify/screens/give_on_rent/give_on_rent_screen.dart';
 import 'package:rentify/screens/home/home_screen.dart';
+import 'package:rentify/screens/profile/profile_screen.dart';
+import 'package:rentify/theme/app_theme.dart';
 import 'package:rentify/widgets/home/bottom_nav_bar.dart';
 
 /// HomeContainer: manages tab navigation with IndexedStack
 ///
 /// Preserves scroll state across tab switches
-class HomeContainer extends ConsumerStatefulWidget {
+/// Tabs: Home (0), Browse (1), Give on Rent (2), Profile (3)
+class HomeContainer extends ConsumerWidget {
   const HomeContainer({super.key});
 
   @override
-  ConsumerState<HomeContainer> createState() => _HomeContainerState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTabIndex = ref.watch(selectedHomeTabProvider);
 
-class _HomeContainerState extends ConsumerState<HomeContainer> {
-  int _currentTabIndex = 0;
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: _currentTabIndex,
+        index: currentTabIndex,
         children: [
           // Tab 0: Home
           const HomeScreen(),
@@ -28,34 +29,32 @@ class _HomeContainerState extends ConsumerState<HomeContainer> {
           // Tab 1: Browse
           const _BrowseScreen(),
 
-          // Tab 2: Add Listing (placeholder - FAB pressed)
+          // Tab 2: Give on Rent
+          const GiveOnRentScreen(),
 
-          // Tab 3: Chat
-          const _ChatScreen(),
-
-          // Tab 4: Profile
-          const _ProfileScreen(),
+          // Tab 3: Profile
+          const ProfileScreen(),
         ],
       ),
+      floatingActionButton: currentTabIndex == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ChatScreen()),
+                );
+              },
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: HomeBottomNavBar(
-        currentIndex: _currentTabIndex,
+        currentIndex: currentTabIndex,
         onTap: (index) {
-          if (index == 2) {
-            // FAB tap - open add listing
-            _showAddListingSheet();
-          } else {
-            setState(() => _currentTabIndex = index);
-          }
+          ref.read(selectedHomeTabProvider.notifier).state = index;
         },
-        onFabPress: _showAddListingSheet,
       ),
     );
-  }
-
-  void _showAddListingSheet() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Add listing coming soon!')));
   }
 }
 
@@ -66,25 +65,5 @@ class _BrowseScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(body: Center(child: Text('Browse Screen')));
-  }
-}
-
-/// Placeholder Chat Screen
-class _ChatScreen extends StatelessWidget {
-  const _ChatScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('Chat Screen')));
-  }
-}
-
-/// Placeholder Profile Screen
-class _ProfileScreen extends StatelessWidget {
-  const _ProfileScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: Text('Profile Screen')));
   }
 }

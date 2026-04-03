@@ -38,27 +38,6 @@ class AuthService {
 
   bool get isInitialized => _pocketBaseService.isInitialized;
 
-  // Future<void> initialize() async {
-  //   await _pocketBaseService.initialize();
-  //
-  //   if (pb.authStore.token.isEmpty) {
-  //     return;
-  //   }
-  //
-  //   if (!pb.authStore.isValid) {
-  //     await logout();
-  //     return;
-  //   }
-  //
-  //   try {
-  //     await pb.collection('users').authRefresh();
-  //   } on ClientException catch (error) {
-  //     if (error.statusCode != 0) {
-  //       await logout();
-  //     }
-  //   }
-  // }
-
   Future<void> initialize() async {
     await _pocketBaseService.initialize();
 
@@ -76,14 +55,30 @@ class AuthService {
     }
   }
 
+  // Future<UsersRecord> login({
+  //   required String email,
+  //   required String password,
+  // }) async {
+  //   final authData = await pb
+  //       .collection('users')
+  //       .authWithPassword(email, password);
+  //   return UsersRecord.fromJson(authData.record.toJson());
+  // }
+
   Future<UsersRecord> login({
     required String email,
     required String password,
   }) async {
-    final authData = await pb
-        .collection('users')
-        .authWithPassword(email, password);
-    return UsersRecord.fromJson(authData.record.toJson());
+    try {
+      final authData = await pb
+          .collection('users')
+          .authWithPassword(email, password);
+      return UsersRecord.fromJson(authData.record.toJson());
+    } catch (e) {
+      // Log actual error for debugging
+      print('🔴 LOGIN ERROR: $e');
+      rethrow;
+    }
   }
 
   Future<UsersRecord> register(RegisterPayload payload) async {
